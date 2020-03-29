@@ -1,0 +1,40 @@
+---
+version: "3"
+services:
+  airflow_webserver:
+    depends_on:
+      - airflow_db
+    image: "pahennessey/airflow"
+    command: "airflow webserver"
+    volumes:
+      - ./dags:/airflow/dags
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres://airflow:airflow@airflow_db:5432/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=60
+      - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=3051
+    ports:
+      - "1080:3051"
+  airflow_scheduler:
+    depends_on:
+      - airflow_db
+    image: "pahennessey/airflow"
+    command: "airflow scheduler"
+    volumes:
+      - ./dags:/airflow/dags
+      - ~/.config/gcloud:/airflow/.config/gcloud
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres://airflow:airflow@airflow_db:5432/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=60
+      - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=3051
+  airflow_db:
+    image: "postgres:11"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_DB=airflow
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5431:5432"
